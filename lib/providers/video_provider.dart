@@ -60,8 +60,10 @@ class VideoProvider extends ChangeNotifier {
   /// Directly insert already-scanned files (from pickAndScan).
   void addScannedFiles(List<VideoItem> files) {
     _allVideos.addAll(files);
+    _allVideos.shuffle(); // Shuffle to ensure global random even on first add
     _scanState = _allVideos.isEmpty ? ScanState.empty : ScanState.done;
     _storage.setCachedVideos(_allVideos);
+    _picker.clear();
     notifyListeners();
   }
 
@@ -106,11 +108,17 @@ class VideoProvider extends ChangeNotifier {
       }
 
       _allVideos = results;
+      _allVideos.shuffle(); // Shuffle globally to break directory-based ordering
+      
       _scanState = results.isEmpty ? ScanState.empty : ScanState.done;
       _scanPercent = 1.0;
       _currentScanningFolder = null;
       _scanningCount = 0;
       _storage.setCachedVideos(_allVideos);
+
+      // Reset picker and history since the library has changed significantly
+      _picker.clear();
+      _history.clear();
 
       if (somePermissionsLost) {
         _scanError = '部分文件夹权限已失效，请重新添加。';
