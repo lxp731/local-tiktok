@@ -418,44 +418,48 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildLoading(VideoProvider video) {
+    final isScanning = video.scanState == ScanState.scanning;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const CircularProgressIndicator(color: Colors.white),
-          const SizedBox(height: 24),
-          if (video.currentScanningFolder != null) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                '正在扫描: ${video.currentScanningFolder}',
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+          if (isScanning) ...[
+            const SizedBox(height: 24),
+            if (video.currentScanningFolder != null) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  '正在扫描: ${video.currentScanningFolder}',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          Text(
-            '已发现 ${video.scanningCount} 个视频',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-          if (video.scanPercent > 0) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: 200,
-              child: LinearProgressIndicator(
-                value: video.scanPercent,
-                backgroundColor: Colors.white10,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
+            ],
             Text(
-              '${(video.scanPercent * 100).toInt()}%',
-              style: const TextStyle(color: Colors.white54, fontSize: 10),
+              '已发现 ${video.scanningCount} 个视频',
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
             ),
+            if (video.scanPercent > 0) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 200,
+                child: LinearProgressIndicator(
+                  value: video.scanPercent,
+                  backgroundColor: Colors.white10,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${(video.scanPercent * 100).toInt()}%',
+                style: const TextStyle(color: Colors.white54, fontSize: 10),
+              ),
+            ],
           ],
         ],
       ),

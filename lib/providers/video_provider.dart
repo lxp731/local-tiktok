@@ -108,6 +108,8 @@ class VideoProvider extends ChangeNotifier {
       _allVideos = results;
       _scanState = results.isEmpty ? ScanState.empty : ScanState.done;
       _scanPercent = 1.0;
+      _currentScanningFolder = null;
+      _scanningCount = 0;
       _storage.setCachedVideos(_allVideos);
 
       if (somePermissionsLost) {
