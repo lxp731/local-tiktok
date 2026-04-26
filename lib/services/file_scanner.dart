@@ -43,6 +43,11 @@ class FileScanner {
     return _parseFiles(raw as List, treeUri);
   }
 
+  /// Delete a file using its SAF document URI.
+  Future<bool?> deleteFile(String uri) async {
+    return await _channel.invokeMethod<bool>('deleteFile', {'uri': uri});
+  }
+
   List<VideoItem> _parseFiles(List raw, String treeUri) {
     return raw.map((item) {
       final map = Map<String, dynamic>.from(item);

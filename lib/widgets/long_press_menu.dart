@@ -10,8 +10,13 @@ import '../providers/player_provider.dart';
 /// link to the settings page.
 class LongPressMenu extends StatelessWidget {
   final VoidCallback onOpenSettings;
+  final VoidCallback onDelete;
 
-  const LongPressMenu({super.key, required this.onOpenSettings});
+  const LongPressMenu({
+    super.key,
+    required this.onOpenSettings,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +102,41 @@ class LongPressMenu extends StatelessWidget {
                     );
                   }).toList(),
                 ),
+              ),
+
+              const Divider(color: Colors.white12, height: 1),
+              const SizedBox(height: 12),
+
+              // Delete Video
+              _MenuRow(
+                icon: Icons.delete_outline,
+                label: '删除此视频',
+                subtitle: '从设备中永久删除该文件',
+                onTap: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFF222222),
+                      title: const Text('删除视频', style: TextStyle(color: Colors.white)),
+                      content: const Text('确定要从设备中永久删除此视频吗？该操作不可撤销。',
+                          style: TextStyle(color: Colors.white70)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('取消', style: TextStyle(color: Colors.white38)),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('确定删除', style: TextStyle(color: Colors.redAccent)),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    onDelete();
+                  }
+                },
               ),
 
               const Divider(color: Colors.white12, height: 1),

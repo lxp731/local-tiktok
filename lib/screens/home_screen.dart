@@ -245,6 +245,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     HapticFeedback.mediumImpact();
     final player = context.read<PlayerProvider>();
+    final video = context.read<VideoProvider>();
     
     // Record state and pause
     final wasPlaying = player.isPlaying;
@@ -260,6 +261,38 @@ class _HomeScreenState extends State<HomeScreen>
         onOpenSettings: () {
           goToSettings = true;
           Navigator.pop(context);
+        },
+        onDelete: () async {
+          final videoToDel = video.current;
+          if (videoToDel == null) return;
+
+          // Close menu
+          Navigator.pop(context);
+
+          // Perform deletion
+          final success = await video.deleteVideo(videoToDel);
+
+          if (mounted) {
+            if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('文件已永久删除')),
+              );
+              // After deletion, video.current is nullified in provider.
+              // We need to play the next available video.
+              if (!video.isEmpty) {
+                video.playNext(autoPick: context.read<SettingsProvider>().autoPlayEnabled);
+                _loadCurrentVideo(player, video.current);
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('删除失败，请检查权限'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              player.resume();
+            }
+          }
         },
       ),
     );

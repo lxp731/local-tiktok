@@ -196,4 +196,27 @@ class VideoProvider extends ChangeNotifier {
     _scanState = _allVideos.isEmpty ? ScanState.empty : ScanState.done;
     notifyListeners();
   }
+
+  /// Permanently delete a video from disk and the library.
+  Future<bool> deleteVideo(VideoItem video) async {
+    try {
+      final bool? success = await _scanner.deleteFile(video.uri);
+      if (success == true) {
+        _allVideos.removeWhere((v) => v.uri == video.uri);
+        _history.removeWhere((v) => v.uri == video.uri);
+        _picker.forget(video.uri);
+        _storage.setCachedVideos(_allVideos);
+        if (_current?.uri == video.uri) {
+          _current = null;
+        }
+        _scanState = _allVideos.isEmpty ? ScanState.empty : ScanState.done;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Delete failed: $e');
+      return false;
+    }
+  }
 }

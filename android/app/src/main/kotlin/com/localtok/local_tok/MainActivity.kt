@@ -56,6 +56,18 @@ class MainActivity : FlutterFragmentActivity() {
                         }
                     }.start()
                 }
+                "deleteFile" -> {
+                    val uriStr = call.argument<String>("uri") ?: return@setMethodCallHandler
+                    val uri = Uri.parse(uriStr)
+                    Thread {
+                        try {
+                            val deleted = DocumentsContract.deleteDocument(contentResolver, uri)
+                            runOnUiThread { result.success(deleted) }
+                        } catch (e: Exception) {
+                            runOnUiThread { result.error("DELETE_ERROR", e.message, null) }
+                        }
+                    }.start()
+                }
                 else -> result.notImplemented()
             }
         }
