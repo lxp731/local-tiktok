@@ -1,0 +1,39 @@
+name: local_tok
+description: "LocalTok - Local video short player with TikTok-style interaction."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  video_player: ^2.9.3
+  shared_preferences: ^2.3.5
+  provider: ^6.1.2
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/ios/AppIcon.appiconset/icon-1024.png"
+  image_path_android: "assets/icons/android/playstore-icon.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/icons/android/playstore-icon.png"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+
+  # 如果您在代码中需要引用 assets/icons 目录下的文件，请取消下面的注释
+  # assets:
+  #   - assets/icons/
