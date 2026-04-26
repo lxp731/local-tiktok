@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:package_info_plus/package_info_plus.dart';
 import '../services/storage_service.dart';
 
 /// Manages persistent app settings and provides them reactively.
@@ -9,15 +10,20 @@ class SettingsProvider extends ChangeNotifier {
   List<String> _folderUris = [];
   bool _autoPlayEnabled = false;
   double _playbackSpeed = 1.0;
+  String _appVersion = '1.0.0';
 
   SettingsProvider(this._storage) {
     _load();
   }
 
-  void _load() {
+  Future<void> _load() async {
     _folderUris = _storage.getFolderUris();
     _autoPlayEnabled = _storage.getAutoPlayEnabled();
     _playbackSpeed = _storage.getPlaybackSpeed();
+    
+    final packageInfo = await PackageInfo.fromPlatform();
+    _appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
+    
     notifyListeners();
   }
 
@@ -27,6 +33,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get autoPlayEnabled => _autoPlayEnabled;
   double get playbackSpeed => _playbackSpeed;
   bool get hasFolders => _folderUris.isNotEmpty;
+  String get appVersion => _appVersion;
 
   // ---- folder management ----
 
