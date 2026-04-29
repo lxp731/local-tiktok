@@ -5,8 +5,8 @@ import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 
 /// Root widget: configures the dark theme and routing.
-class LocalTokApp extends StatelessWidget {
-  const LocalTokApp({super.key});
+class LeoTokApp extends StatelessWidget {
+  const LeoTokApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class LocalTokApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: 'LocalTok',
+      title: 'LeoTok',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

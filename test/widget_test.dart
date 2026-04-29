@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:local_tok/app.dart';
+import 'package:leo_tok/app.dart';
 
 void main() {
   testWidgets('App renders', (WidgetTester tester) async {
-    await tester.pumpWidget(const LocalTokApp());
+    await tester.pumpWidget(const LeoTokApp());
     // Basic smoke test — the home screen should render without crashing
-    expect(find.byType(LocalTokApp), findsOneWidget);
+    expect(find.byType(LeoTokApp), findsOneWidget);
   });
 }

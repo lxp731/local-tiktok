@@ -1,4 +1,4 @@
-# LocalTok — 项目路线图
+# LeoTok — 项目路线图
 
 > 本地视频短视频播放器，抖音式交互体验。
 
@@ -8,7 +8,7 @@
 
 | 项目 | 详情 |
 |------|------|
-| **应用名称** | LocalTok |
+| **应用名称** | LeoTok |
 | **技术栈** | Flutter (Dart), Kotlin |
 | **状态管理** | Provider |
 | **存储方案** | SAF + Metadata Cache (JSON) |

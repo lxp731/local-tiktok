@@ -2,16 +2,20 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/video_item.dart';
 
-/// Thin wrapper around SharedPreferences for LocalTok settings.
+/// Thin wrapper around SharedPreferences for LeoTok settings.
 ///
 /// Keys managed:
-/// - `folder_uris`       : comma-separated SAF tree URIs
-/// - `auto_play_enabled` : bool
-/// - `playback_speed`    : double (1.0, 1.5, 2.0)
-/// - `video_cache`       : list of JSON strings representing VideoItems
+/// - `folder_uris`                : comma-separated SAF tree URIs
+/// - `auto_play_enabled`          : bool
+/// - `screen_off_listening`       : bool
+/// - `screen_off_timer_minutes`   : int (1-30)
+/// - `playback_speed`             : double (1.0, 1.5, 2.0)
+/// - `video_cache`                : list of JSON strings representing VideoItems
 class StorageService {
   static const _keyFolders = 'folder_uris';
   static const _keyAutoPlay = 'auto_play_enabled';
+  static const _keyScreenOffListening = 'screen_off_listening';
+  static const _keyScreenOffTimerMinutes = 'screen_off_timer_minutes';
   static const _keySpeed = 'playback_speed';
   static const _keyVideoCache = 'video_cache';
 
@@ -46,6 +50,22 @@ class StorageService {
 
   Future<bool> setAutoPlayEnabled(bool value) =>
       _prefs.setBool(_keyAutoPlay, value);
+
+  // ---- screen-off listening ----
+
+  bool getScreenOffListeningEnabled() =>
+      _prefs.getBool(_keyScreenOffListening) ?? false;
+
+  Future<bool> setScreenOffListeningEnabled(bool value) =>
+      _prefs.setBool(_keyScreenOffListening, value);
+
+  // ---- screen-off timer ----
+
+  int getScreenOffTimerMinutes() =>
+      _prefs.getInt(_keyScreenOffTimerMinutes) ?? 15;
+
+  Future<bool> setScreenOffTimerMinutes(int minutes) =>
+      _prefs.setInt(_keyScreenOffTimerMinutes, minutes.clamp(1, 30));
 
   // ---- playback speed ----
 

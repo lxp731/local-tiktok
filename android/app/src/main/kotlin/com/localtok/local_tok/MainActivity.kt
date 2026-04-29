@@ -3,8 +3,10 @@ package com.localtok.local_tok
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.provider.DocumentsContract
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -68,9 +70,33 @@ class MainActivity : FlutterFragmentActivity() {
                         }
                     }.start()
                 }
+                "startBackgroundService" -> {
+                    startBackgroundService()
+                    result.success(true)
+                }
+                "stopBackgroundService" -> {
+                    stopBackgroundService()
+                    result.success(true)
+                }
                 else -> result.notImplemented()
             }
         }
+    }
+
+    private fun startBackgroundService() {
+        val intent = Intent(this, BackgroundAudioService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(this, intent)
+        } else {
+            startService(intent)
+        }
+    }
+
+    private fun stopBackgroundService() {
+        val intent = Intent(this, BackgroundAudioService::class.java).apply {
+            action = BackgroundAudioService.ACTION_STOP
+        }
+        stopService(intent)
     }
 
     private fun scanFolderTree(treeUri: Uri): List<Map<String, Any>> {

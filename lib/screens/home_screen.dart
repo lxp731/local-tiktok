@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../models/video_item.dart';
 import '../models/scan_state.dart';
@@ -39,6 +40,10 @@ class _HomeScreenState extends State<HomeScreen>
   SettingsProvider? _settingsProvider;
   bool _isAutoPlaying = false;
 
+  // Screen-off listening countdown
+  Timer? _screenOffTimer;
+  int _remainingSeconds = 0;
+
   @override
   void initState() {
     super.initState();
@@ -58,9 +63,76 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _settingsHandler() {
     if (!mounted) return;
-    // Sync looping state of current controller with auto-play setting
+    final settings = _settingsProvider!;
+
+    // Sync looping state: if either auto-play or screen-off listening is on, 
+    // we DON'T loop so the video can finish and trigger the next one.
     if (_playerProvider?.current != null) {
-      _playerProvider!.current!.setLooping(!_settingsProvider!.autoPlayEnabled);
+      final shouldLoop = !settings.autoPlayEnabled && !settings.screenOffListeningEnabled;
+      _playerProvider!.current!.setLooping(shouldLoop);
+    }
+
+    // Manage wake lock
+    _updateWakeLock();
+
+    // Manage screen-off countdown
+    if (settings.screenOffListeningEnabled) {
+      _startScreenOffTimer();
+    } else {
+      _cancelScreenOffTimer();
+    }
+  }
+
+  void _updateWakeLock() {
+    final settings = _settingsProvider;
+    if (settings == null) return;
+
+    if (settings.autoPlayEnabled) {
+      // Keep screen on for auto-play
+      WakelockPlus.enable();
+    } else {
+      // For screen-off listening or normal mode, we don't force screen on.
+      // Screen-off listening specifically wants the screen to be able to go off.
+      WakelockPlus.disable();
+    }
+  }
+
+  void _startScreenOffTimer() {
+    final settings = _settingsProvider;
+    if (settings == null) return;
+
+    _cancelScreenOffTimer();
+    _remainingSeconds = settings.screenOffTimerMinutes * 60;
+
+    _screenOffTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      _remainingSeconds--;
+      if (_remainingSeconds <= 0) {
+        timer.cancel();
+        _onScreenOffTimerExpired();
+      }
+    });
+  }
+
+  void _cancelScreenOffTimer() {
+    _screenOffTimer?.cancel();
+    _screenOffTimer = null;
+  }
+
+  void _onScreenOffTimerExpired() {
+    if (!mounted) return;
+    final player = context.read<PlayerProvider>();
+    player.pause();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('倒计时结束，已暂停播放'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -69,7 +141,8 @@ class _HomeScreenState extends State<HomeScreen>
     
     if (_playerProvider!.isFinished) {
       final settings = context.read<SettingsProvider>();
-      if (settings.autoPlayEnabled) {
+      // Auto-play next video if either Auto-play or Screen-off listening is enabled
+      if (settings.autoPlayEnabled || settings.screenOffListeningEnabled) {
         _isAutoPlaying = true;
         _swipeUp().then((_) {
           _isAutoPlaying = false;
@@ -96,8 +169,9 @@ class _HomeScreenState extends State<HomeScreen>
     final settings = context.read<SettingsProvider>();
     try {
       await player.loadCurrent(video.uri, speed: settings.playbackSpeed);
-      // Configure looping based on auto-play
-      player.current?.setLooping(!settings.autoPlayEnabled);
+      // Disable looping if auto-advance is expected (auto-play or screen-off listening)
+      final shouldLoop = !settings.autoPlayEnabled && !settings.screenOffListeningEnabled;
+      player.current?.setLooping(shouldLoop);
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -175,9 +249,10 @@ class _HomeScreenState extends State<HomeScreen>
     final video = context.read<VideoProvider>();
     final player = context.read<PlayerProvider>();
 
-    // If auto-play is on, pick next; otherwise random
-    final autoPlay = context.read<SettingsProvider>().autoPlayEnabled;
-    final had = video.playNext(autoPick: !autoPlay);
+    // If auto-play or screen-off listening is on, pick next; otherwise random
+    final settings = context.read<SettingsProvider>();
+    final autoAdvance = settings.autoPlayEnabled || settings.screenOffListeningEnabled;
+    final had = video.playNext(autoPick: !autoAdvance);
     if (!had) return;
 
     await _loadCurrentVideo(player, video.current);
@@ -525,6 +600,9 @@ class _HomeScreenState extends State<HomeScreen>
     _settingsProvider?.removeListener(_settingsHandler);
     _controlsTimer?.cancel();
     _longPressTimer?.cancel();
+    _cancelScreenOffTimer();
+    // Release wake lock on dispose
+    WakelockPlus.disable();
     super.dispose();
   }
 }

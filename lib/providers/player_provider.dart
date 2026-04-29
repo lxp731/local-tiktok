@@ -25,14 +25,24 @@ class PlayerProvider extends ChangeNotifier {
 
   /// Set a new current video.
   Future<void> loadCurrent(String uri, {double speed = 1.0}) async {
-    // Unsubscribe from old current if any
-    if (_currentController != null) {
-      _currentController!.removeListener(_onListener);
+    final oldController = _currentController;
+    _isFinished = false; // Reset finished state for new video
+    
+    // 1. Get/Create new controller
+    final newController = _getOrCreate(uri);
+    
+    // 2. If switching to a DIFFERENT controller, cleanup the old one
+    if (oldController != null && oldController != newController) {
+      oldController.removeListener(_onListener);
+      await oldController.pause();
     }
 
-    _isFinished = false; // Reset finished state for new video
-    _currentController = _getOrCreate(uri);
+    _currentController = newController;
+    
+    // 3. Ensure we don't have duplicate listeners on the current controller
+    _currentController!.removeListener(_onListener);
     _currentController!.addListener(_onListener);
+    
     _isInitialized = _currentController!.value.isInitialized;
     _isPlaying = _currentController!.value.isPlaying;
     notifyListeners();
@@ -143,6 +153,7 @@ class PlayerProvider extends ChangeNotifier {
     if (_controllerCache.containsKey(uri)) {
       return _controllerCache[uri]!;
     }
+    // Removed mixWithOthers: true to maintain primary audio focus
     final c = VideoPlayerController.contentUri(Uri.parse(uri));
     _controllerCache[uri] = c;
     // Keep cache size bounded

@@ -13,7 +13,9 @@ class VideoProvider extends ChangeNotifier {
   final RandomPicker _picker = RandomPicker(windowSize: 20);
 
   List<VideoItem> _allVideos = [];
-  final List<VideoItem> _history = []; // stack: most recent = last
+  final List<VideoItem> _backwardHistory = []; // stack: previously watched (for going back)
+  final List<VideoItem> _forwardHistory = [];  // stack: popped from backward (for going forward)
+  static const int _maxHistory = 20;
   VideoItem? _current;
   ScanState _scanState = ScanState.idle;
   String? _scanError;
@@ -46,7 +48,7 @@ class VideoProvider extends ChangeNotifier {
 
   List<VideoItem> get allVideos => List.unmodifiable(_allVideos);
   VideoItem? get current => _current;
-  bool get hasHistory => _history.isNotEmpty;
+  bool get hasHistory => _backwardHistory.isNotEmpty;
   int get totalCount => _allVideos.length;
   ScanState get scanState => _scanState;
   String? get scanError => _scanError;
@@ -118,7 +120,8 @@ class VideoProvider extends ChangeNotifier {
 
       // Reset picker and history since the library has changed significantly
       _picker.clear();
-      _history.clear();
+      _backwardHistory.clear();
+      _forwardHistory.clear();
 
       if (somePermissionsLost) {
         _scanError = '部分文件夹权限已失效，请重新添加。';
@@ -141,17 +144,31 @@ class VideoProvider extends ChangeNotifier {
     if (_allVideos.isEmpty) return false;
     final next = _picker.pick(_allVideos);
     if (_current != null) {
-      _history.add(_current!);
+      _addToBackwardHistory(_current!);
     }
+    _forwardHistory.clear(); // user took a new path, discard forward history
     _current = next;
     notifyListeners();
     return true;
   }
 
   /// Move to the next video.
+  /// First checks forward history (when going back up after going down),
+  /// then falls back to picking the next video.
   /// If [autoPick] is true, picks randomly; otherwise picks sequential.
   bool playNext({bool autoPick = false}) {
     if (_allVideos.isEmpty) return false;
+
+    // Check forward history first (user swiped up after swiping down)
+    if (_forwardHistory.isNotEmpty) {
+      if (_current != null) {
+        _addToBackwardHistory(_current!);
+      }
+      _current = _forwardHistory.removeLast();
+      notifyListeners();
+      return true;
+    }
+
     VideoItem next;
     if (autoPick) {
       next = _picker.pick(_allVideos);
@@ -161,7 +178,7 @@ class VideoProvider extends ChangeNotifier {
       next = _allVideos[nextIdx];
     }
     if (_current != null) {
-      _history.add(_current!);
+      _addToBackwardHistory(_current!);
     }
     _current = next;
     notifyListeners();
@@ -169,17 +186,38 @@ class VideoProvider extends ChangeNotifier {
   }
 
   /// Go back to the previous video from history.
-  /// Returns `null` if history is empty.
+  /// Returns `null` if backward history is empty.
   VideoItem? playPrevious() {
-    if (_history.isEmpty) return null;
-    _current = _history.removeLast();
+    if (_backwardHistory.isEmpty) return null;
+    // Push current to forward history first
+    if (_current != null) {
+      _addToForwardHistory(_current!);
+    }
+    _current = _backwardHistory.removeLast();
     notifyListeners();
     return _current;
   }
 
+  /// Add a video to backward history, respecting max size.
+  void _addToBackwardHistory(VideoItem video) {
+    _backwardHistory.add(video);
+    while (_backwardHistory.length > _maxHistory) {
+      _backwardHistory.removeAt(0);
+    }
+  }
+
+  /// Add a video to forward history, respecting max size.
+  void _addToForwardHistory(VideoItem video) {
+    _forwardHistory.add(video);
+    while (_forwardHistory.length > _maxHistory) {
+      _forwardHistory.removeAt(0);
+    }
+  }
+
   /// Reset state: clear history, current, picker; play a random new video.
   bool resetAndPlayRandom() {
-    _history.clear();
+    _backwardHistory.clear();
+    _forwardHistory.clear();
     _picker.clear();
     _current = null;
     return playRandom();
@@ -188,7 +226,8 @@ class VideoProvider extends ChangeNotifier {
   /// Remove a video from the library (if its folder was removed).
   void removeByFolder(String folderUri) {
     _allVideos.removeWhere((v) => v.folder == folderUri);
-    _history.removeWhere((v) => v.folder == folderUri);
+    _backwardHistory.removeWhere((v) => v.folder == folderUri);
+    _forwardHistory.removeWhere((v) => v.folder == folderUri);
     _picker.forget(folderUri);
     if (_current != null && _current!.folder == folderUri) {
       _current = null;
@@ -203,7 +242,8 @@ class VideoProvider extends ChangeNotifier {
       final bool? success = await _scanner.deleteFile(video.uri);
       if (success == true) {
         _allVideos.removeWhere((v) => v.uri == video.uri);
-        _history.removeWhere((v) => v.uri == video.uri);
+        _backwardHistory.removeWhere((v) => v.uri == video.uri);
+        _forwardHistory.removeWhere((v) => v.uri == video.uri);
         _picker.forget(video.uri);
         _storage.setCachedVideos(_allVideos);
         if (_current?.uri == video.uri) {

@@ -23,7 +23,7 @@ class EmptyGuide extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              '添加本地文件夹来开始使用 LocalTok',
+              '添加本地文件夹来开始使用 LeoTok',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white54, fontSize: 14),
             ),

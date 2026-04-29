@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app.dart';
 import 'providers/player_provider.dart';
@@ -27,7 +28,7 @@ void main() async {
         ChangeNotifierProvider.value(value: video),
         ChangeNotifierProvider(create: (_) => PlayerProvider()),
       ],
-      child: const _AppLifecycleWrapper(child: LocalTokApp()),
+      child: const _AppLifecycleWrapper(child: LeoTokApp()),
     ),
   );
 }
@@ -62,12 +63,30 @@ class _AppLifecycleWrapperState extends State<_AppLifecycleWrapper>
     if (!mounted) return;
 
     final player = context.read<PlayerProvider>();
+    final settings = context.read<SettingsProvider>();
+
     if (state == AppLifecycleState.paused) {
-      _wasPlayingBeforeBackground = player.isPlaying;
-      player.pause();
+      if (settings.screenOffListeningEnabled) {
+        // Some Android devices (like MI 8 / Pixel ROMs) automatically pause video players
+        // when the activity is backgrounded or screen is turned off.
+        // We attempt to override this by forcing a resume after a short delay.
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (settings.screenOffListeningEnabled && !player.isPlaying) {
+            player.resume();
+          }
+        });
+      } else {
+        _wasPlayingBeforeBackground = player.isPlaying;
+        player.pause();
+      }
     } else if (state == AppLifecycleState.resumed) {
-      if (_wasPlayingBeforeBackground) {
+      if (settings.autoPlayEnabled) {
+        WakelockPlus.enable();
+      }
+
+      if (!settings.screenOffListeningEnabled && _wasPlayingBeforeBackground) {
         player.resume();
+        _wasPlayingBeforeBackground = false;
       }
     }
   }

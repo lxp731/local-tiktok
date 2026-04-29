@@ -1,6 +1,6 @@
 {
-    "name": "local_tok",
-    "short_name": "local_tok",
+    "name": "LeoTok",
+    "short_name": "LeoTok",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

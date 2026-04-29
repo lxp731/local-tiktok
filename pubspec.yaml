@@ -1,8 +1,8 @@
-name: local_tok
-description: "LocalTok - Local video short player with TikTok-style interaction."
+name: leo_tok
+description: "LeoTok - Local video short player with TikTok-style interaction."
 publish_to: 'none'
 
-version: 1.0.0+4
+version: 1.1.0+5
 
 environment:
   sdk: ^3.11.4
@@ -16,6 +16,7 @@ dependencies:
   provider: ^6.1.2
   path: ^1.9.1
   package_info_plus: ^10.1.0
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:

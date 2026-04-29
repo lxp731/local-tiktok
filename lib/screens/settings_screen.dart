@@ -132,7 +132,7 @@ class SettingsScreen extends StatelessWidget {
               // ---- Section: About ----
               const _SectionHeader(title: '关于'),
               ListTile(
-                title: const Text('LocalTok',
+                title: const Text('LeoTok',
                     style: TextStyle(color: Colors.white)),
                 subtitle: Text('版本 ${settings.appVersion}',
                     style: TextStyle(color: Colors.white38)),
