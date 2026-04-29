@@ -52,3 +52,6 @@ key.properties
 .env*
 app.*.symbols
 app.*.map.json
+
+# temp files
+task.md
